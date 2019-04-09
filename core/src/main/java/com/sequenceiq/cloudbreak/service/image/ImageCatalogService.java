@@ -541,7 +541,7 @@ public class ImageCatalogService extends AbstractWorkspaceAwareResourceService<I
 
     @Override
     public WorkspaceResource resource() {
-        return WorkspaceResource.IMAGECATALOG;
+        return WorkspaceResource.IMAGE_CATALOG;
     }
 
     @Override

@@ -5,12 +5,13 @@ import javax.validation.Valid;
 
 import org.springframework.stereotype.Controller;
 
+import com.sequenceiq.cloudbreak.api.endpoint.v4.events.responses.NotificationEventType;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.mpacks.ManagementPackV4Endpoint;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.mpacks.request.ManagementPackV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.mpacks.response.ManagementPackV4Response;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.mpacks.response.ManagementPackV4Responses;
 import com.sequenceiq.cloudbreak.api.util.ConverterUtil;
-import com.sequenceiq.cloudbreak.common.type.ResourceEvent;
+import com.sequenceiq.cloudbreak.authorization.WorkspaceResource;
 import com.sequenceiq.cloudbreak.domain.ManagementPack;
 import com.sequenceiq.cloudbreak.domain.workspace.User;
 import com.sequenceiq.cloudbreak.service.RestRequestThreadLocalService;
@@ -50,14 +51,16 @@ public class ManagementPackV4Controller extends NotificationController implement
         ManagementPack managementPack = converterUtil.convert(request, ManagementPack.class);
         User user = userService.getOrCreate(restRequestThreadLocalService.getCloudbreakUser());
         managementPack = mpackService.create(managementPack, workspaceId, user);
-        notify(ResourceEvent.MANAGEMENT_PACK_CREATED);
-        return converterUtil.convert(managementPack, ManagementPackV4Response.class);
+        ManagementPackV4Response response = converterUtil.convert(managementPack, ManagementPackV4Response.class);
+        notify(response, NotificationEventType.CREATE_SUCCESS, WorkspaceResource.MPACK, workspaceId);
+        return response;
     }
 
     @Override
     public ManagementPackV4Response deleteInWorkspace(Long workspaceId, String name) {
         ManagementPack deleted = mpackService.deleteByNameFromWorkspace(name, workspaceId);
-        notify(ResourceEvent.MANAGEMENT_PACK_DELETED);
-        return converterUtil.convert(deleted, ManagementPackV4Response.class);
+        ManagementPackV4Response response = converterUtil.convert(deleted, ManagementPackV4Response.class);
+        notify(response, NotificationEventType.DELETE_SUCCESS, WorkspaceResource.MPACK, workspaceId);
+        return response;
     }
 }

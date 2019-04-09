@@ -1,9 +1,5 @@
 package com.sequenceiq.cloudbreak.core.flow2.stack.instance.termination;
 
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.AVAILABLE;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.DELETE_FAILED;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.UPDATE_IN_PROGRESS;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -14,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.DetailedStackStatus;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.events.responses.NotificationEventType;
 import com.sequenceiq.cloudbreak.cloud.event.resource.RemoveInstanceResult;
 import com.sequenceiq.cloudbreak.common.type.HostMetadataState;
 import com.sequenceiq.cloudbreak.core.flow2.stack.CloudbreakFlowMessageService;
@@ -48,7 +45,7 @@ public class InstanceTerminationService {
     public void instanceTermination(InstanceTerminationContext context) {
         Stack stack = context.getStack();
         stackUpdater.updateStackStatus(stack.getId(), DetailedStackStatus.REMOVE_INSTANCE, "Removing instance");
-        flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_REMOVING_INSTANCE, UPDATE_IN_PROGRESS.name());
+        flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_REMOVING_INSTANCE, NotificationEventType.UPDATE_IN_PROGRESS);
         List<InstanceMetaData> instanceMetaDataList = context.getInstanceMetaDataList();
         for (InstanceMetaData instanceMetaData : instanceMetaDataList) {
             String hostName = instanceMetaData.getDiscoveryFQDN();
@@ -62,7 +59,7 @@ public class InstanceTerminationService {
             }
             if (hostName != null) {
                 String instanceGroupName = instanceMetaData.getInstanceGroup().getGroupName();
-                flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_SCALING_TERMINATING_HOST_FROM_HOSTGROUP, UPDATE_IN_PROGRESS.name(),
+                flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_SCALING_TERMINATING_HOST_FROM_HOSTGROUP, NotificationEventType.UPDATE_IN_PROGRESS,
                         hostName, instanceGroupName);
             }
         }
@@ -85,13 +82,13 @@ public class InstanceTerminationService {
         }
         LOGGER.debug("Terminate instance result: {}", payload);
         stackUpdater.updateStackStatus(stack.getId(), DetailedStackStatus.AVAILABLE, "Instance removed");
-        flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_REMOVING_INSTANCE_FINISHED, AVAILABLE.name());
+        flowMessageService.fireEventAndLog(stack.getId(), Msg.STACK_REMOVING_INSTANCE_FINISHED, NotificationEventType.AVAILABLE);
     }
 
     public void handleInstanceTerminationError(long stackId, StackFailureEvent payload) {
         Exception ex = payload.getException();
         LOGGER.info("Error during instance terminating flow:", ex);
         stackUpdater.updateStackStatus(stackId, DetailedStackStatus.AVAILABLE, "Instance termination failed. " + ex.getMessage());
-        flowMessageService.fireEventAndLog(stackId, Msg.STACK_REMOVING_INSTANCE_FAILED, DELETE_FAILED.name(), ex.getMessage());
+        flowMessageService.fireEventAndLog(stackId, Msg.STACK_REMOVING_INSTANCE_FAILED, NotificationEventType.DELETE_FAILED, ex.getMessage());
     }
 }

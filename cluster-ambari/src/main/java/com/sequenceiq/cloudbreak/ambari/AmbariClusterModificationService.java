@@ -14,7 +14,7 @@ import static com.sequenceiq.cloudbreak.ambari.AmbariOperationType.START_SERVICE
 import static com.sequenceiq.cloudbreak.ambari.AmbariOperationType.STOP_AMBARI_PROGRESS_STATE;
 import static com.sequenceiq.cloudbreak.ambari.AmbariOperationType.UPSCALE_AMBARI_PROGRESS_STATE;
 import static com.sequenceiq.cloudbreak.ambari.HostGroupAssociationBuilder.FQDN;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.UPDATE_IN_PROGRESS;
+import static com.sequenceiq.cloudbreak.api.endpoint.v4.events.responses.NotificationEventType.UPDATE_IN_PROGRESS;
 import static com.sequenceiq.cloudbreak.polling.PollingResult.isExited;
 import static com.sequenceiq.cloudbreak.polling.PollingResult.isTimeout;
 import static java.util.Collections.singletonMap;
@@ -158,7 +158,7 @@ public class AmbariClusterModificationService implements ClusterModificationServ
             if (!stopped) {
                 LOGGER.debug("Stop all Hadoop services");
                 eventService
-                        .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS.name(),
+                        .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS,
                                 cloudbreakMessagesService.getMessage(AMBARI_CLUSTER_SERVICES_STOPPING.code()));
                 int requestId = ambariClient.stopAllServices();
                 if (requestId != -1) {
@@ -175,7 +175,7 @@ public class AmbariClusterModificationService implements ClusterModificationServ
                     throw new CloudbreakException("Failed to stop Hadoop services.");
                 }
                 eventService
-                        .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS.name(),
+                        .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS,
                                 cloudbreakMessagesService.getMessage(AMBARI_CLUSTER_SERVICES_STOPPED.code()));
             }
         } catch (AmbariConnectionException ignored) {
@@ -201,7 +201,7 @@ public class AmbariClusterModificationService implements ClusterModificationServ
 
         LOGGER.debug("Start all Hadoop services");
         eventService
-                .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS.name(), cloudbreakMessagesService.getMessage(AMBARI_CLUSTER_SERVICES_STARTING.code()));
+                .fireCloudbreakEvent(stack.getId(), UPDATE_IN_PROGRESS, cloudbreakMessagesService.getMessage(AMBARI_CLUSTER_SERVICES_STARTING.code()));
         int requestId;
         try {
             requestId = ambariClient.startAllServices();

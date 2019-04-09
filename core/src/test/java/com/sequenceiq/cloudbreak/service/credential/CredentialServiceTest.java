@@ -33,11 +33,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.sequenceiq.cloudbreak.TestUtil;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.credentials.responses.CredentialPrerequisitesV4Response;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.views.CredentialViewV4Response;
 import com.sequenceiq.cloudbreak.common.model.user.CloudbreakUser;
 import com.sequenceiq.cloudbreak.common.type.ResourceEvent;
 import com.sequenceiq.cloudbreak.controller.exception.BadRequestException;
 import com.sequenceiq.cloudbreak.controller.exception.NotFoundException;
 import com.sequenceiq.cloudbreak.controller.validation.credential.CredentialValidator;
+import com.sequenceiq.cloudbreak.converter.v4.stacks.view.CredentialToCredentialViewV4ResponseConverter;
 import com.sequenceiq.cloudbreak.domain.Credential;
 import com.sequenceiq.cloudbreak.domain.Topology;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
@@ -136,6 +138,9 @@ public class CredentialServiceTest {
 
     @Mock
     private RestRequestThreadLocalService restRequestThreadLocalService;
+
+    @Mock
+    private CredentialToCredentialViewV4ResponseConverter credentialToCredentialViewV4ResponseConverter;
 
     @InjectMocks
     private final CredentialService underTest = new CredentialService();
@@ -251,6 +256,7 @@ public class CredentialServiceTest {
     public void testUpdateByWorkspaceIdWhenEveryConditionMeetsThenCredentialSaveHappens() {
         Credential saved = mock(Credential.class);
         Credential original = mock(Credential.class);
+        CredentialViewV4Response credentialViewV4Response = mock(CredentialViewV4Response.class);
         when(original.cloudPlatform()).thenReturn(TEST_CLOUD_PLATFORM);
         when(testCredential.cloudPlatform()).thenReturn(TEST_CLOUD_PLATFORM);
         doNothing().when(credentialValidator).validateCredentialCloudPlatform(anyString());
@@ -259,6 +265,7 @@ public class CredentialServiceTest {
         when(workspaceService.get(anyLong(), any())).thenReturn(workspace);
         when(workspaceService.retrieveForUser(any())).thenReturn(Set.of(workspace));
         when(credentialRepository.save(any())).thenReturn(saved);
+        when(credentialToCredentialViewV4ResponseConverter.convert(testCredential)).thenReturn(credentialViewV4Response);
 
         Credential result = underTest.updateByWorkspaceId(WORKSPACE_ID, testCredential);
 
@@ -270,7 +277,7 @@ public class CredentialServiceTest {
         verify(workspaceService, times(2)).get(WORKSPACE_ID, user);
         verify(credentialAdapter, times(1)).verify(any(Credential.class), anyLong(), anyString());
         verify(credentialAdapter, times(1)).verify(testCredential, WORKSPACE_ID, USER_ID);
-        verify(notificationSender, times(1)).send(any());
+        verify(notificationSender, times(2)).send(any());
         verify(messagesService, times(1)).getMessage(ResourceEvent.CREDENTIAL_MODIFIED.getMessage());
     }
 
@@ -311,7 +318,7 @@ public class CredentialServiceTest {
         verify(credentialValidator, times(1)).validateCredentialCloudPlatform(TEST_CLOUD_PLATFORM);
         verify(credentialAdapter, times(1)).verify(any(Credential.class), anyLong(), anyString());
         verify(credentialAdapter, times(1)).verify(testCredential, WORKSPACE_ID, USER_ID);
-        verify(notificationSender, times(1)).send(any());
+        verify(notificationSender, times(2)).send(any());
         verify(messagesService, times(1)).getMessage(ResourceEvent.CREDENTIAL_CREATED.getMessage());
     }
 
@@ -350,7 +357,7 @@ public class CredentialServiceTest {
         verify(credentialValidator, times(1)).validateCredentialCloudPlatform(TEST_CLOUD_PLATFORM);
         verify(credentialAdapter, times(1)).verify(any(Credential.class), anyLong(), anyString());
         verify(credentialAdapter, times(1)).verify(testCredential, WORKSPACE_ID, USER_ID);
-        verify(notificationSender, times(1)).send(any());
+        verify(notificationSender, times(2)).send(any());
         verify(messagesService, times(1)).getMessage(ResourceEvent.CREDENTIAL_CREATED.getMessage());
     }
 
@@ -452,7 +459,7 @@ public class CredentialServiceTest {
         verify(stackRepository, times(1)).findByCredential(credential);
         verify(userProfileHandler, times(1)).destroyProfileCredentialPreparation(credential);
         verify(credentialRepository, times(1)).save(credential);
-        verify(notificationSender, times(1)).send(any());
+        verify(notificationSender, times(2)).send(any());
         verify(messagesService, times(1)).getMessage(ResourceEvent.CREDENTIAL_DELETED.getMessage());
     }
 

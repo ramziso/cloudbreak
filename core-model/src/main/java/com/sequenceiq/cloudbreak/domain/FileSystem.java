@@ -62,7 +62,7 @@ public class FileSystem implements ProvisionEntity, WorkspaceAwareResource {
 
     @Override
     public WorkspaceResource getResource() {
-        return WorkspaceResource.FILESYSTEM;
+        return WorkspaceResource.FILE_SYSTEM;
     }
 
     public Long getId() {

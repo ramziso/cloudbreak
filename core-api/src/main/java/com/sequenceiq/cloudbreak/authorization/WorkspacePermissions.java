@@ -7,7 +7,7 @@ import static com.sequenceiq.cloudbreak.authorization.WorkspacePermissions.Actio
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.ALL;
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.CLUSTER_DEFINITION;
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.CREDENTIAL;
-import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.IMAGECATALOG;
+import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.IMAGE_CATALOG;
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.LDAP;
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.MPACK;
 import static com.sequenceiq.cloudbreak.authorization.WorkspaceResource.PROXY;
@@ -27,8 +27,8 @@ public enum WorkspacePermissions {
     CLUSTER_DEFINITION_READ(CLUSTER_DEFINITION, READ, "Read cluster definitions in an workspace."),
     CLUSTER_DEFINITION_WRITE(CLUSTER_DEFINITION, WRITE, "Write cluster definitions in an workspace."),
 
-    IMAGECATALOG_READ(IMAGECATALOG, READ, "Read image catalogs in an workspace."),
-    IMAGECATALOG_WRITE(IMAGECATALOG, WRITE, "Write image catalogs in an workspace."),
+    IMAGECATALOG_READ(IMAGE_CATALOG, READ, "Read image catalogs in an workspace."),
+    IMAGECATALOG_WRITE(IMAGE_CATALOG, WRITE, "Write image catalogs in an workspace."),
 
     CREDENTIAL_READ(CREDENTIAL, READ, "Read credentials in an workspace."),
     CREDENTIAL_WRITE(CREDENTIAL, WRITE, "Write credentials in an workspace."),

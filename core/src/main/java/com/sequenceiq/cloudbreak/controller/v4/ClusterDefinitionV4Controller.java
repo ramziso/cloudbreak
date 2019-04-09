@@ -15,9 +15,10 @@ import com.sequenceiq.cloudbreak.api.endpoint.v4.clusterdefinition.responses.Clu
 import com.sequenceiq.cloudbreak.api.endpoint.v4.clusterdefinition.responses.ClusterDefinitionV4ViewResponse;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.clusterdefinition.responses.ClusterDefinitionV4ViewResponses;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.clusterdefinition.responses.RecommendationV4Response;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.events.responses.NotificationEventType;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.util.responses.ParametersQueryV4Response;
 import com.sequenceiq.cloudbreak.api.util.ConverterUtil;
-import com.sequenceiq.cloudbreak.common.type.ResourceEvent;
+import com.sequenceiq.cloudbreak.authorization.WorkspaceResource;
 import com.sequenceiq.cloudbreak.domain.ClusterDefinition;
 import com.sequenceiq.cloudbreak.domain.view.ClusterDefinitionView;
 import com.sequenceiq.cloudbreak.service.clusterdefinition.ClusterDefinitionService;
@@ -54,22 +55,25 @@ public class ClusterDefinitionV4Controller extends NotificationController implem
     public ClusterDefinitionV4Response post(Long workspaceId, ClusterDefinitionV4Request request) {
         ClusterDefinition clusterDefinition = clusterDefinitionService.createForLoggedInUser(
                 converterUtil.convert(request, ClusterDefinition.class), workspaceId);
-        notify(ResourceEvent.CLUSTER_DEFINITION_CREATED);
-        return converterUtil.convert(clusterDefinition, ClusterDefinitionV4Response.class);
+        ClusterDefinitionV4Response response = converterUtil.convert(clusterDefinition, ClusterDefinitionV4Response.class);
+        notify(response, NotificationEventType.CREATE_SUCCESS, WorkspaceResource.CLUSTER_DEFINITION, workspaceId);
+        return response;
     }
 
     @Override
     public ClusterDefinitionV4Response delete(Long workspaceId, String name) {
         ClusterDefinition deleted = clusterDefinitionService.deleteByNameFromWorkspace(name, workspaceId);
-        notify(ResourceEvent.CLUSTER_DEFINITION_DELETED);
-        return converterUtil.convert(deleted, ClusterDefinitionV4Response.class);
+        ClusterDefinitionV4Response response = converterUtil.convert(deleted, ClusterDefinitionV4Response.class);
+        notify(response, NotificationEventType.DELETE_SUCCESS, WorkspaceResource.CLUSTER_DEFINITION, workspaceId);
+        return response;
     }
 
     @Override
     public ClusterDefinitionV4Responses deleteMultiple(Long workspaceId, Set<String> names) {
         Set<ClusterDefinition> deleted = clusterDefinitionService.deleteMultipleByNameFromWorkspace(names, workspaceId);
-        notify(ResourceEvent.CLUSTER_DEFINITION_DELETED);
-        return new ClusterDefinitionV4Responses(converterUtil.convertAllAsSet(deleted, ClusterDefinitionV4Response.class));
+        ClusterDefinitionV4Responses responses = new ClusterDefinitionV4Responses(converterUtil.convertAllAsSet(deleted, ClusterDefinitionV4Response.class));
+        notify(responses, NotificationEventType.CREATE_SUCCESS, WorkspaceResource.IMAGE_CATALOG, workspaceId);
+        return responses;
     }
 
     @Override
