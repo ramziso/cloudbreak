@@ -7,6 +7,7 @@ import javax.ws.rs.ForbiddenException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import com.sequenceiq.it.cloudbreak.newway.CloudbreakClient;
@@ -31,6 +32,7 @@ import com.sequenceiq.it.cloudbreak.newway.dto.recipe.RecipeTestDto;
 import com.sequenceiq.it.cloudbreak.newway.dto.stack.StackTestDto;
 import com.sequenceiq.it.cloudbreak.newway.testcase.AbstractIntegrationTest;
 
+@Ignore
 public class WorkspaceTest extends AbstractIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkspaceTest.class);
