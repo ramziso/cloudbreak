@@ -1,15 +1,10 @@
 package com.sequenceiq.cloudbreak.service.clusterdefinition;
 
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.DELETE_COMPLETED;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.DELETE_FAILED;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.DELETE_IN_PROGRESS;
-import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.PRE_DELETE_IN_PROGRESS;
 import static com.sequenceiq.cloudbreak.controller.exception.NotFoundException.notFound;
 import static com.sequenceiq.cloudbreak.util.SqlUtil.getProperSqlErrorMessage;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -24,7 +19,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.ResourceStatus;
-import com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status;
 import com.sequenceiq.cloudbreak.authorization.WorkspaceResource;
 import com.sequenceiq.cloudbreak.cluster.api.ClusterApi;
 import com.sequenceiq.cloudbreak.clusterdefinition.AmbariBlueprintProcessorFactory;
@@ -42,21 +36,17 @@ import com.sequenceiq.cloudbreak.init.clusterdefinition.ClusterDefinitionLoaderS
 import com.sequenceiq.cloudbreak.repository.ClusterDefinitionRepository;
 import com.sequenceiq.cloudbreak.repository.ClusterDefinitionViewRepository;
 import com.sequenceiq.cloudbreak.repository.workspace.WorkspaceResourceRepository;
-import com.sequenceiq.cloudbreak.service.AbstractWorkspaceAwareResourceService;
+import com.sequenceiq.cloudbreak.service.AbstractArchivistService;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterService;
 import com.sequenceiq.cloudbreak.template.filesystem.FileSystemConfigQueryObject;
 import com.sequenceiq.cloudbreak.template.filesystem.FileSystemConfigQueryObject.Builder;
 import com.sequenceiq.cloudbreak.template.filesystem.query.ConfigQueryEntry;
 import com.sequenceiq.cloudbreak.template.processor.configuration.SiteConfigurations;
-import com.sequenceiq.cloudbreak.util.NameUtil;
 
 @Service
-public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceService<ClusterDefinition> {
+public class ClusterDefinitionService extends AbstractArchivistService<ClusterDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDefinitionService.class);
-
-    private static final Set<Status> DELETED_CLUSTER_STATUSES
-            = Set.of(PRE_DELETE_IN_PROGRESS, DELETE_IN_PROGRESS, DELETE_FAILED, DELETE_COMPLETED);
 
     private static final String SHARED_SERVICES_READY = "shared_services_ready";
 
@@ -142,7 +132,7 @@ public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceServ
     }
 
     public Set<ClusterDefinition> getAllAvailableInWorkspace(Workspace workspace) {
-        Set<ClusterDefinition> clusterDefinitions = clusterDefinitionRepository.findAllByNotDeletedInWorkspace(workspace.getId());
+        Set<ClusterDefinition> clusterDefinitions = clusterDefinitionRepository.findAllByWorkspaceIdAndArchivedFalse(workspace.getId());
         if (clusterDefinitionLoaderService.addingDefaultClusterDefinitionsAreNecessaryForTheUser(clusterDefinitions)) {
             LOGGER.debug("Modifying cluster definitions based on the defaults for the '{}' workspace.", workspace.getId());
             clusterDefinitions = clusterDefinitionLoaderService.loadClusterDEfinitionsForTheWorkspace(clusterDefinitions, workspace,
@@ -153,7 +143,7 @@ public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceServ
     }
 
     public ClusterDefinition getByNameForWorkspaceAndLoadDefaultsIfNecessary(String name, Workspace workspace) {
-        Set<ClusterDefinition> clusterDefinitions = clusterDefinitionRepository.findAllByNotDeletedInWorkspace(workspace.getId());
+        Set<ClusterDefinition> clusterDefinitions = clusterDefinitionRepository.findAllByWorkspaceIdAndArchivedFalse(workspace.getId());
         Optional<ClusterDefinition> clusterDefinition = filterClusterDefinitionsByName(name, clusterDefinitions);
         if (clusterDefinition.isPresent()) {
             return clusterDefinition.get();
@@ -212,20 +202,6 @@ public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceServ
     }
 
     @Override
-    public ClusterDefinition delete(ClusterDefinition clusterDefinition) {
-        LOGGER.debug("Deleting cluster definition with name: {}", clusterDefinition.getName());
-        prepareDeletion(clusterDefinition);
-        if (ResourceStatus.USER_MANAGED.equals(clusterDefinition.getStatus())) {
-            clusterDefinitionRepository.delete(clusterDefinition);
-        } else {
-            clusterDefinition.setName(NameUtil.postfixWithTimestamp(clusterDefinition.getName()));
-            clusterDefinition.setStatus(ResourceStatus.DEFAULT_DELETED);
-            clusterDefinition = clusterDefinitionRepository.save(clusterDefinition);
-        }
-        return clusterDefinition;
-    }
-
-    @Override
     public WorkspaceResourceRepository<ClusterDefinition, Long> repository() {
         return clusterDefinitionRepository;
     }
@@ -237,7 +213,7 @@ public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceServ
 
     @Override
     protected void prepareDeletion(ClusterDefinition clusterDefinition) {
-        Set<Cluster> notDeletedClustersWithThisCd = getNotDeletedClustersWithClusterDefinition(clusterDefinition);
+        Set<Cluster> notDeletedClustersWithThisCd = clusterService.findNotDeletedByClusterDefinition(clusterDefinition);
         if (!notDeletedClustersWithThisCd.isEmpty()) {
             if (notDeletedClustersWithThisCd.size() > 1) {
                 String clusters = notDeletedClustersWithThisCd
@@ -251,18 +227,6 @@ public class ClusterDefinitionService extends AbstractWorkspaceAwareResourceServ
             throw new BadRequestException(String.format("There is a cluster ['%s'] which uses cluster definition '%s'. Please remove this "
                     + "cluster before deleting the cluster definition", notDeletedClustersWithThisCd.iterator().next().getName(), clusterDefinition.getName()));
         }
-    }
-
-    private Set<Cluster> getNotDeletedClustersWithClusterDefinition(ClusterDefinition clusterDefinition) {
-        Set<Cluster> clustersWithThisClusterDefinition = clusterService.findByClusterDefinition(clusterDefinition);
-        Set<Cluster> deletedClustersWithThisBp = clustersWithThisClusterDefinition.stream()
-                .filter(cluster -> DELETED_CLUSTER_STATUSES.contains(cluster.getStatus()))
-                .collect(Collectors.toSet());
-        deletedClustersWithThisBp.forEach(cluster -> cluster.setClusterDefinition(null));
-        clusterService.saveAll(deletedClustersWithThisBp);
-        Set<Cluster> notDeletedClustersWithThisBp = new HashSet<>(clustersWithThisClusterDefinition);
-        notDeletedClustersWithThisBp.removeAll(deletedClustersWithThisBp);
-        return notDeletedClustersWithThisBp;
     }
 
     @Override

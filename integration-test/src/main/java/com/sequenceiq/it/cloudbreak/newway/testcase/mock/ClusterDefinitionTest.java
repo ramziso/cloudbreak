@@ -67,6 +67,28 @@ public class ClusterDefinitionTest extends AbstractIntegrationTest {
 
     @Test(dataProvider = TEST_CONTEXT)
     @Description(
+            given = "a valid cluster definition",
+            when = "a valid cluster definition create request with same name is sent",
+            then = "badRequest exception")
+    public void testCreateAndCreateClusterDefinition(TestContext testContext) {
+        String clusterDefinitionName = resourcePropertyProvider().getName();
+        List<String> keys = Arrays.asList("key_1", "key_2", "key_3");
+        List<Object> values = Arrays.asList("value_1", "value_2", "value_3");
+        testContext.given(ClusterDefinitionTestDto.class)
+                .withName(clusterDefinitionName)
+                .withDescription(clusterDefinitionName)
+                .withTag(keys, values)
+                .withClusterDefinition(VALID_CD)
+                .when(clusterDefinitionTestClient.createV4(), key(clusterDefinitionName))
+                .when(clusterDefinitionTestClient.listV4())
+                .then(ClusterDefinitionTest::checkCustomClusterDefinitionsIsListed)
+                .when(clusterDefinitionTestClient.createV4(), key(clusterDefinitionName))
+                .expect(BadRequestException.class, expectedMessage("already exists with name").withKey(clusterDefinitionName))
+                .validate();
+    }
+
+    @Test(dataProvider = TEST_CONTEXT)
+    @Description(
             given = "there is a running cloudbreak",
             when = "a cluster definition create request with invalid name is sent",
             then = "a BadRequestException should be returned")
@@ -147,6 +169,28 @@ public class ClusterDefinitionTest extends AbstractIntegrationTest {
                 .validate();
     }
 
+    @Test(dataProvider = TEST_CONTEXT)
+    @Description(
+            given = "there is a deleted valid clusterdefinition",
+            when = "a valid cluster definition create request with previous name is sent",
+            then = "the cluster definition should be in the response")
+    public void testCreateDeleteCreateClusterDefinition(TestContext testContext) {
+        String clusterDefinitionName = resourcePropertyProvider().getName();
+        List<String> keys = Arrays.asList("key_1", "key_2", "key_3");
+        List<Object> values = Arrays.asList("value_1", "value_2", "value_3");
+        testContext.given(ClusterDefinitionTestDto.class)
+                .withName(clusterDefinitionName)
+                .withDescription(clusterDefinitionName)
+                .withTag(keys, values)
+                .withClusterDefinition(VALID_CD)
+                .when(clusterDefinitionTestClient.createV4(), key(clusterDefinitionName))
+                .when(clusterDefinitionTestClient.deleteV4(), key(clusterDefinitionName))
+                .when(clusterDefinitionTestClient.createV4(), key(clusterDefinitionName))
+                .when(clusterDefinitionTestClient.listV4())
+                .then(ClusterDefinitionTest::checkCustomClusterDefinitionsIsListed)
+                .validate();
+    }
+
     private static ClusterDefinitionTestDto checkClusterDefinitionDoesNotExistInTheList(TestContext testContext, ClusterDefinitionTestDto entity,
             CloudbreakClient cloudbreakClient) {
         if (entity.getViewResponses().stream().anyMatch(bp -> bp.getName().equals(entity.getName()))) {
@@ -184,6 +228,17 @@ public class ClusterDefinitionTest extends AbstractIntegrationTest {
                 .collect(Collectors.toList());
         if (result.isEmpty()) {
             throw new TestFailException("Cluster definition is not listed");
+        }
+        return clusterDefinition;
+    }
+
+    private static ClusterDefinitionTestDto checkCustomClusterDefinitionsIsListed(TestContext testContext, ClusterDefinitionTestDto clusterDefinition,
+            CloudbreakClient cloudbreakClient) {
+        List<ClusterDefinitionV4ViewResponse> result = clusterDefinition.getViewResponses().stream()
+                .filter(bp -> bp.getStatus().equals(ResourceStatus.USER_MANAGED))
+                .collect(Collectors.toList());
+        if (result.isEmpty()) {
+            throw new TestFailException("Custom cluster definition is not listed");
         }
         return clusterDefinition;
     }

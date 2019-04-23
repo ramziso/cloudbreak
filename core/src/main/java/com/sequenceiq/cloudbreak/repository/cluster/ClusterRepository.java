@@ -56,7 +56,7 @@ public interface ClusterRepository extends WorkspaceResourceRepository<Cluster, 
     Set<Cluster> findAllWithNoWorkspace();
 
     @CheckPermissionsByReturnValue
-    Set<Cluster> findByClusterDefinition(ClusterDefinition clusterDefinition);
+    Set<Cluster> findByClusterDefinitionAndStatusNotIn(ClusterDefinition clusterDefinition, Set<Status> statuses);
 
     @CheckPermissionsByReturnValue
     Set<Cluster> findByLdapConfigAndStatusNot(LdapConfig ldapConfig, Status status);

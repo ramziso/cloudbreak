@@ -28,7 +28,7 @@ public class ClusterDefinitionTestDto extends AbstractCloudbreakTestDto<ClusterD
     public void cleanUp(TestContext context, CloudbreakClient cloudbreakClient) {
         LOGGER.info("Cleaning up resource with name: {}", getName());
         try {
-            cloudbreakClient.getCloudbreakClient().clusterTemplateV4EndPoint().delete(cloudbreakClient.getWorkspaceId(), getName());
+            cloudbreakClient.getCloudbreakClient().clusterDefinitionV4Endpoint().delete(cloudbreakClient.getWorkspaceId(), getName());
         } catch (WebApplicationException ignore) {
             LOGGER.info("Something happend.");
         }

@@ -1,15 +1,14 @@
 package com.sequenceiq.cloudbreak.service.clusterdefinition;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Before;
@@ -28,6 +27,7 @@ import com.sequenceiq.cloudbreak.domain.ClusterDefinition;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
 import com.sequenceiq.cloudbreak.domain.workspace.Workspace;
 import com.sequenceiq.cloudbreak.repository.ClusterDefinitionRepository;
+import com.sequenceiq.cloudbreak.service.Clock;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -41,6 +41,9 @@ public class ClusterDefinitionServiceTest {
 
     @Mock
     private ClusterDefinitionRepository clusterDefinitionRepository;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private ClusterDefinitionService underTest;
@@ -56,7 +59,7 @@ public class ClusterDefinitionServiceTest {
 
     @Test
     public void testDeletionWithZeroClusters() {
-        when(clusterService.findByClusterDefinition(any())).thenReturn(Collections.emptySet());
+        when(clusterService.findNotDeletedByClusterDefinition(any())).thenReturn(Collections.emptySet());
 
         ClusterDefinition deleted = underTest.delete(clusterDefinition);
 
@@ -72,40 +75,32 @@ public class ClusterDefinitionServiceTest {
         cluster.setStatus(Status.AVAILABLE);
         exceptionRule.expect(BadRequestException.class);
         exceptionRule.expectMessage("c1");
-        when(clusterService.findByClusterDefinition(any())).thenReturn(Set.of(cluster));
+        when(clusterService.findNotDeletedByClusterDefinition(any())).thenReturn(Set.of(cluster));
 
         underTest.delete(clusterDefinition);
     }
 
     @Test
-    public void testDeletionWithTerminatedClusters() {
-        Cluster cluster1 = new Cluster();
-        cluster1.setName("c1");
-        cluster1.setId(1L);
-        cluster1.setClusterDefinition(clusterDefinition);
-        cluster1.setStatus(Status.PRE_DELETE_IN_PROGRESS);
-        Cluster cluster2 = new Cluster();
-        cluster2.setName("c2");
-        cluster2.setId(2L);
-        cluster2.setClusterDefinition(clusterDefinition);
-        cluster2.setStatus(Status.DELETE_IN_PROGRESS);
-        Cluster cluster3 = new Cluster();
-        cluster3.setName("c3");
-        cluster3.setId(3L);
-        cluster3.setClusterDefinition(clusterDefinition);
-        cluster3.setStatus(Status.DELETE_COMPLETED);
-        Cluster cluster4 = new Cluster();
-        cluster4.setName("c4");
-        cluster4.setId(4L);
-        cluster4.setClusterDefinition(clusterDefinition);
-        cluster4.setStatus(Status.DELETE_FAILED);
+    public void testDeleteByIdArchives() {
+        ClusterDefinition clusterDefinition = new ClusterDefinition();
+        clusterDefinition.setArchived(false);
+        clusterDefinition.setStatus(ResourceStatus.USER_MANAGED);
+        when(clusterDefinitionRepository.findById(2L)).thenReturn(Optional.of(clusterDefinition));
 
-        when(clusterService.findByClusterDefinition(any())).thenReturn(Set.of(cluster1, cluster2, cluster3, cluster4));
+        underTest.delete(2L);
+
+        assertTrue(clusterDefinition.isArchived());
+        verify(clusterDefinitionRepository).save(clusterDefinition);
+        verify(clusterDefinitionRepository, never()).delete(clusterDefinition);
+    }
+
+    @Test
+    public void testDeletionWithTerminatedClusters() {
+        when(clusterService.findNotDeletedByClusterDefinition(any())).thenReturn(Set.of());
 
         ClusterDefinition deleted = underTest.delete(clusterDefinition);
 
         assertNotNull(deleted);
-        verify(clusterService, times(1)).saveAll(anyCollection());
     }
 
     @Test
@@ -115,20 +110,13 @@ public class ClusterDefinitionServiceTest {
         cluster1.setId(1L);
         cluster1.setClusterDefinition(clusterDefinition);
         cluster1.setStatus(Status.AVAILABLE);
-        Cluster cluster2 = new Cluster();
-        cluster2.setName("c2");
-        cluster2.setId(2L);
-        cluster2.setClusterDefinition(clusterDefinition);
-        cluster2.setStatus(Status.DELETE_IN_PROGRESS);
 
-        when(clusterService.findByClusterDefinition(any())).thenReturn(Set.of(cluster1, cluster2));
+        when(clusterService.findNotDeletedByClusterDefinition(any())).thenReturn(Set.of(cluster1));
 
         try {
             underTest.delete(clusterDefinition);
         } catch (BadRequestException e) {
             assertTrue(e.getMessage().contains("c1"));
-            assertFalse(e.getMessage().contains("c2"));
         }
-        verify(clusterService, times(1)).saveAll(anyCollection());
     }
 }

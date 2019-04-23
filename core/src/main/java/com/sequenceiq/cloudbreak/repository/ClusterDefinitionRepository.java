@@ -7,7 +7,6 @@ import java.util.Set;
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.ResourceStatus;
@@ -26,9 +25,8 @@ import com.sequenceiq.cloudbreak.service.EntityType;
 @WorkspaceResourceType(resource = WorkspaceResource.CLUSTER_DEFINITION)
 public interface ClusterDefinitionRepository extends WorkspaceResourceRepository<ClusterDefinition, Long> {
 
-    @Query("SELECT b FROM ClusterDefinition b WHERE b.workspace.id= :workspaceId AND b.status <> 'DEFAULT_DELETED'")
     @CheckPermissionsByReturnValue
-    Set<ClusterDefinition> findAllByNotDeletedInWorkspace(@Param("workspaceId") Long workspaceId);
+    Set<ClusterDefinition> findAllByWorkspaceIdAndArchivedFalse(@Param("workspaceId") Long workspaceId);
 
     @CheckPermissionsByReturnValue
     Set<ClusterDefinition> findAllByWorkspaceIdAndStatus(Long workspaceId, ResourceStatus status);
