@@ -18,6 +18,9 @@ repositories {
 }
 
 dependencies {
+  compile project(':core-api')
+  compile project(":flow")
+
   implementation     group: 'com.google.code.gson',      name: 'gson'
   implementation     group: 'dnsjava',                   name: 'dnsjava'
   implementation     group: 'io.micrometer',             name: 'micrometer-core'
@@ -25,9 +28,12 @@ dependencies {
   implementation     group: 'io.micrometer',             name: 'micrometer-registry-prometheus'
   implementation     group: 'io.springfox',              name: 'springfox-swagger2'
   implementation     group: 'io.springfox',              name: 'springfox-swagger-ui'
-  implementation     group: 'io.swagger',                name: 'swagger-jersey2-jaxrs'
+  implementation     ('io.swagger:swagger-jersey2-jaxrs') {
+    exclude group: 'org.yaml'
+  }
   implementation     group: 'javax.xml.bind',            name: 'jaxb-api'
   implementation     group: 'org.glassfish.jersey.core', name: 'jersey-server'
+  implementation     group: 'org.glassfish.jaxb',        name: 'jaxb-runtime'
   implementation     group: 'org.mybatis',               name: 'mybatis-migrations'
   implementation     group: 'org.postgresql',            name: 'postgresql'
   implementation     group: 'org.springframework.boot',  name: 'spring-boot-starter'
@@ -51,6 +57,7 @@ dependencies {
     implementation     group: 'io.springfox',              name: 'springfox-swagger-ui',           version: swagger2Version
     implementation     group: 'io.swagger',                name: 'swagger-jersey2-jaxrs',          version: '1.5.21'
     implementation     group: 'javax.xml.bind',            name: 'jaxb-api',                       version: '2.3.1'
+    implementation     group: 'org.glassfish.jaxb',        name: 'jaxb-runtime',                   version: '2.3.1'
     implementation     group: 'org.glassfish.jersey.core', name: 'jersey-server',                  version: '2.28'
     implementation     group: 'org.mybatis',               name: 'mybatis-migrations',             version: '3.2.0'
     implementation     group: 'org.postgresql',            name: 'postgresql',                     version: postgreSQLVersion
