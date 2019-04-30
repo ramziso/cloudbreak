@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import org.slf4j.Logger;
@@ -40,12 +41,13 @@ public class MockUserManagementService extends UserManagementGrpc.UserManagement
     @Inject
     private JsonUtil jsonUtil;
 
-    @Value("#{'${cb.cert.dir:/certs}/${cb.cm.license.file:}'}")
+    @Value("#{'${cb.cm.license.dir:}/${cb.cm.license.file:}'}")
     private String cbLicenseFilePath;
 
     private String cbLicense;
 
-    public MockUserManagementService() {
+    @PostConstruct
+    public void setLicense() {
         this.cbLicense = getLicense();
     }
 
@@ -71,7 +73,7 @@ public class MockUserManagementService extends UserManagementGrpc.UserManagement
         responseObserver.onNext(
                 GetAccountResponse.newBuilder()
                         .setAccount(UserManagementProto.Account.newBuilder()
-                                .setClouderaManagerLicenseKey(cbLicense)
+                                .setClouderaManagerLicenseKey(getLicense())
                                 .build())
                         .build());
         responseObserver.onCompleted();
@@ -150,11 +152,13 @@ public class MockUserManagementService extends UserManagementGrpc.UserManagement
         String license = "";
         try {
             if (Files.exists(Paths.get(cbLicenseFilePath))) {
+                LOG.info("Cloudbreak license file successfully loaded.");
                 license = Files.readString(Path.of(cbLicenseFilePath));
-                LOG.debug("Cloudbreak license file successfully loaded.");
+            } else {
+                LOG.warn("The license file is not exists in path: {}", cbLicenseFilePath);
             }
         } catch (IOException e) {
-            LOG.warn("Failed for reading license file from path: {}", cbLicenseFilePath);
+            LOG.warn("Failed for reading license file: {}", e);
         }
         return license;
     }

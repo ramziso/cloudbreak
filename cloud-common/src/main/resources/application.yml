@@ -87,9 +87,6 @@ cb:
   cert:
     dir: /certs/
 
-  cm:
-    license.file: license.txt
-
   smtp.sender:
     host:
     port: 25
