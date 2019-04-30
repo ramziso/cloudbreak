@@ -73,7 +73,7 @@ public class MockUserManagementService extends UserManagementGrpc.UserManagement
         responseObserver.onNext(
                 GetAccountResponse.newBuilder()
                         .setAccount(UserManagementProto.Account.newBuilder()
-                                .setClouderaManagerLicenseKey(getLicense())
+                                .setClouderaManagerLicenseKey(cbLicense)
                                 .build())
                         .build());
         responseObserver.onCompleted();
@@ -158,7 +158,7 @@ public class MockUserManagementService extends UserManagementGrpc.UserManagement
                 LOG.warn("The license file is not exists in path: {}", cbLicenseFilePath);
             }
         } catch (IOException e) {
-            LOG.warn("Failed for reading license file: {}", e);
+            LOG.warn("Error during reading license.", e);
         }
         return license;
     }
