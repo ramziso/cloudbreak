@@ -24,29 +24,29 @@ public class SdxController implements SdxEndpoint {
     private SdxService sdxService;
 
     @Override
-    public SdxClusterResponse create(@Valid SdxClusterRequest createSdxClusterRequest) {
+    public SdxClusterResponse create(Long envId, @Valid SdxClusterRequest createSdxClusterRequest) {
         String userCrn = restRequestThreadLocalService.getUserCrn();
         return sdxService.createSdx(userCrn, createSdxClusterRequest);
     }
 
     @Override
-    public void delete() {
+    public void delete(Long envId) {
         String userCrn = restRequestThreadLocalService.getUserCrn();
         sdxService.deleteSdx(userCrn);
     }
 
     @Override
-    public void redeploy(@Valid RedeploySdxClusterRequest redeploySdxClusterRequest) {
+    public void redeploy(Long envId, @Valid RedeploySdxClusterRequest redeploySdxClusterRequest) {
 
     }
 
     @Override
-    public SdxClusterResponse get() {
+    public SdxClusterResponse get(Long envId) {
         return null;
     }
 
     @Override
-    public List<SdxClusterResponse> list() {
+    public List<SdxClusterResponse> list(Long envId) {
         String userCrn = restRequestThreadLocalService.getUserCrn();
         return sdxService.listSdx(userCrn);
     }

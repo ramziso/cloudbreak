@@ -8,6 +8,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -20,29 +21,32 @@ import io.swagger.annotations.ApiOperation;
 public interface SdxEndpoint {
 
     @POST
+    @Path("{envId}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create SDX cluster", produces = "application/json", nickname = "createSdx")
-    SdxClusterResponse create(@Valid SdxClusterRequest createSdxClusterRequest);
+    SdxClusterResponse create(@PathParam("envId") Long envId, @Valid SdxClusterRequest createSdxClusterRequest);
 
     @DELETE
+    @Path("{envId}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "delete SDX cluster", produces = "application/json", nickname = "deleteSdx")
-    void delete();
+    void delete(@PathParam("envId") Long envId);
 
     @POST
-    @Path("{name}/redeploy")
+    @Path("{envId}/redeploy")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "redeploy SDX cluster", produces = "application/json", nickname = "redeploySdx")
-    void redeploy(@Valid RedeploySdxClusterRequest redeploySdxClusterRequest);
+    void redeploy(@PathParam("envId") Long envId, @Valid RedeploySdxClusterRequest redeploySdxClusterRequest);
 
     @GET
-    @Path("{name}")
+    @Path("{envId}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "get SDX cluster", produces = "application/json", nickname = "getSdx")
-    SdxClusterResponse get();
+    SdxClusterResponse get(@PathParam("envId") Long envId);
 
     @GET
+    @Path("{envId}/list")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "list SDX clusters", produces = "application/json", nickname = "listSdx")
-    List<SdxClusterResponse> list();
+    List<SdxClusterResponse> list(@PathParam("envId") Long envId);
 }
