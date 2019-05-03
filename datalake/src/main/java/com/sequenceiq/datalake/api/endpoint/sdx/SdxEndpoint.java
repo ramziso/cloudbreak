@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiOperation;
 public interface SdxEndpoint {
 
     @POST
-    @Path("{envId}")
+    @Path("{envName}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create SDX cluster", produces = "application/json", nickname = "createSdx")
-    SdxClusterResponse create(@PathParam("envId") Long envId, @Valid SdxClusterRequest createSdxClusterRequest);
+    SdxClusterResponse create(@PathParam("envName") String envName, @Valid SdxClusterRequest createSdxClusterRequest);
 
     @DELETE
-    @Path("{envId}")
+    @Path("{envName}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "delete SDX cluster", produces = "application/json", nickname = "deleteSdx")
-    void delete(@PathParam("envId") Long envId);
+    void delete(@PathParam("envName") String envName);
 
     @POST
-    @Path("{envId}/redeploy")
+    @Path("{envName}/redeploy")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "redeploy SDX cluster", produces = "application/json", nickname = "redeploySdx")
-    void redeploy(@PathParam("envId") Long envId, @Valid RedeploySdxClusterRequest redeploySdxClusterRequest);
+    void redeploy(@PathParam("envName") String envName, @Valid RedeploySdxClusterRequest redeploySdxClusterRequest);
 
     @GET
-    @Path("{envId}")
+    @Path("{envName}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "get SDX cluster", produces = "application/json", nickname = "getSdx")
-    SdxClusterResponse get(@PathParam("envId") Long envId);
+    SdxClusterResponse get(@PathParam("envName") String envName);
 
     @GET
-    @Path("{envId}/list")
+    @Path("{envName}/list")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "list SDX clusters", produces = "application/json", nickname = "listSdx")
-    List<SdxClusterResponse> list(@PathParam("envId") Long envId);
+    List<SdxClusterResponse> list(@PathParam("envName") String envName);
 }

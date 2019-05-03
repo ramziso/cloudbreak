@@ -4,21 +4,11 @@ import java.util.Map;
 
 public class SdxClusterRequest {
 
-    private String environment;
-
     private String accessCidr;
 
     private String clusterShape; // what does it contain?
 
     private Map<String, String> tags;
-
-    public String getEnvironment() {
-        return environment;
-    }
-
-    public void setEnvironment(String environment) {
-        this.environment = environment;
-    }
 
     public String getAccessCidr() {
         return accessCidr;

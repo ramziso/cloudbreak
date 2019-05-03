@@ -53,7 +53,7 @@ public class SdxService {
     @Inject
     private SdxClusterRepository sdxClusterRepository;
 
-    public SdxClusterResponse createSdx(String userCrn, SdxClusterRequest sdxClusterRequest) {
+    public SdxClusterResponse createSdx(String userCrn, String envName, SdxClusterRequest sdxClusterRequest) {
         StackV4Request stackV4Request = new StackV4Request();
 
         SdxCluster sdxCluster = new SdxCluster();
@@ -70,7 +70,7 @@ public class SdxService {
         stackV4Request.setTags(tags);
 
         EnvironmentSettingsV4Request environment = new EnvironmentSettingsV4Request();
-        environment.setName(sdxClusterRequest.getEnvironment());
+        environment.setName(envName);
         stackV4Request.setEnvironment(environment);
 
         PlacementSettingsV4Request placementSettingsV4Request = new PlacementSettingsV4Request();
